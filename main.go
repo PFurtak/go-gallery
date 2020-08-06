@@ -17,9 +17,15 @@ func contactHandler(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(rw, "To get in touch, please email: <a href=\"mailto:support@gogallery.com\">support@gogallery.com</a>")
 }
 
+func faqHandler(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set("Content-Type", "text/html")
+	fmt.Fprint(rw, "<h1>FAQ</h1><br><ol><li>Who is this site for? <b>Photographers!</b></li><li>Can I upload my own photos? <b>Yes!</b></li><li>What language is this application written in? <b>Golang</b></li></ol>")
+}
+
 func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/", homeHandler)
 	router.HandleFunc("/contact", contactHandler)
+	router.HandleFunc("/faq", faqHandler)
 	http.ListenAndServe(":5000", router)
 }
