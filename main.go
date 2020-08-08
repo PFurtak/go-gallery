@@ -2,14 +2,40 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 )
 
 func homeHandler(rw http.ResponseWriter, r *http.Request) {
+
+	type User struct {
+		Name string
+	}
+
+	data := User{
+		Name: "John Smith",
+	}
+
 	rw.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(rw, "<h1>Welcome to Go-Gallery!</h1>")
+	t, err := template.ParseFiles("templates/hello.gohtml")
+	if err != nil {
+		panic(err)
+	}
+
+	err = t.Execute(os.Stdout, data)
+
+	if err != nil {
+		panic(err)
+	}
+
+	data.Name = "Patrick F."
+	err = t.Execute(os.Stdout, data)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func contactHandler(rw http.ResponseWriter, r *http.Request) {
