@@ -2,45 +2,29 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"net/http"
-	"os"
+	"text/template"
 
 	"github.com/gorilla/mux"
 )
 
+var (
+	homeTemplate    *template.Template
+	contactTemplate *template.Template
+)
+
 func homeHandler(rw http.ResponseWriter, r *http.Request) {
-
-	type User struct {
-		Name string
-	}
-
-	data := User{
-		Name: "John Smith",
-	}
-
 	rw.Header().Set("Content-Type", "text/html")
-	t, err := template.ParseFiles("templates/hello.gohtml")
-	if err != nil {
-		panic(err)
-	}
-
-	err = t.Execute(os.Stdout, data)
-
-	if err != nil {
-		panic(err)
-	}
-
-	data.Name = "Patrick F."
-	err = t.Execute(os.Stdout, data)
-	if err != nil {
+	if err := homeTemplate.Execute(rw, nil); err != nil {
 		panic(err)
 	}
 }
 
 func contactHandler(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(rw, "To get in touch, please email: <a href=\"mailto:support@gogallery.com\">support@gogallery.com</a>")
+	if err := contactTemplate.Execute(rw, nil); err != nil {
+		panic(err)
+	}
 }
 
 func faqHandler(rw http.ResponseWriter, r *http.Request) {
@@ -55,6 +39,18 @@ func notFound(rw http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	var err error
+
+	homeTemplate, err = template.ParseFiles("views/home.gohtml", "views/layouts/footer.gohtml")
+	if err != nil {
+		panic(err)
+	}
+
+	contactTemplate, err = template.ParseFiles("views/contact.gohtml", "views/layouts/footer.gohtml")
+	if err != nil {
+		panic(err)
+	}
+
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFound)
 	router.HandleFunc("/", homeHandler)
