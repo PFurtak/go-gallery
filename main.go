@@ -8,7 +8,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var homeTemplate *template.Template
+var (
+	homeTemplate    *template.Template
+	contactTemplate *template.Template
+)
 
 func homeHandler(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "text/html")
@@ -19,7 +22,9 @@ func homeHandler(rw http.ResponseWriter, r *http.Request) {
 
 func contactHandler(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(rw, "To get in touch, please email: <a href=\"mailto:support@gogallery.com\">support@gogallery.com</a>")
+	if err := contactTemplate.Execute(rw, nil); err != nil {
+		panic(err)
+	}
 }
 
 func faqHandler(rw http.ResponseWriter, r *http.Request) {
@@ -35,7 +40,13 @@ func notFound(rw http.ResponseWriter, r *http.Request) {
 
 func main() {
 	var err error
+
 	homeTemplate, err = template.ParseFiles("views/home.gohtml")
+	if err != nil {
+		panic(err)
+	}
+
+	contactTemplate, err = template.ParseFiles("views/contact.gohtml")
 	if err != nil {
 		panic(err)
 	}
