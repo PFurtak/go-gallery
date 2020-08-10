@@ -7,6 +7,7 @@ import (
 // NewView is for assigning to the view type
 func NewView(layout string, files ...string) *View {
 	files = append(files,
+		"views/layouts/navbar.gohtml",
 		"views/layouts/bootstrap.gohtml",
 		"views/layouts/footer.gohtml",
 	)
