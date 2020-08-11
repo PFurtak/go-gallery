@@ -2,11 +2,16 @@ package views
 
 import (
 	"html/template"
+	"net/http"
 	"path/filepath"
 )
 
+// Variables for ease of updating layout template paths
 var (
-	LayoutDir         string = "views/layouts/"
+
+	// LayoutDir is file path that holds templates
+	LayoutDir string = "views/layouts/"
+	// TemplateExtension is the extension of our templates
 	TemplateExtension string = ".gohtml"
 )
 
@@ -28,6 +33,11 @@ func NewView(layout string, files ...string) *View {
 type View struct {
 	Template *template.Template
 	Layout   string
+}
+
+// Render is used to render view with predefined layout
+func (v *View) Render(rw http.ResponseWriter, data interface{}) error {
+	return v.Template.ExecuteTemplate(rw, v.Layout, data)
 }
 
 func layoutFiles() []string {
