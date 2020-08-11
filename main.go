@@ -15,18 +15,12 @@ var (
 
 func homeHandler(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "text/html")
-	err := homeView.Template.Execute(rw, nil)
-	if err != nil {
-		panic(err)
-	}
+	must(homeView.Render(rw, nil))
 }
 
 func contactHandler(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "text/html")
-	err := contactView.Template.Execute(rw, nil)
-	if err != nil {
-		panic(err)
-	}
+	must(contactView.Render(rw, nil))
 }
 
 func faqHandler(rw http.ResponseWriter, r *http.Request) {
@@ -41,8 +35,8 @@ func notFound(rw http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	homeView = views.NewView("views/home.gohtml")
-	contactView = views.NewView("views/contact.gohtml")
+	homeView = views.NewView("bootstrap", "views/home.gohtml")
+	contactView = views.NewView("bootstrap", "views/contact.gohtml")
 
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFound)
@@ -50,4 +44,10 @@ func main() {
 	router.HandleFunc("/contact", contactHandler)
 	router.HandleFunc("/faq", faqHandler)
 	http.ListenAndServe(":5000", router)
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
