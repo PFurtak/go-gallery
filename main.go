@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Users/patrickfurtak/desktop/go-gallery/controllers"
 	"github.com/Users/patrickfurtak/desktop/go-gallery/views"
 	"github.com/gorilla/mux"
 )
@@ -11,7 +12,6 @@ import (
 var (
 	homeView    *views.View
 	contactView *views.View
-	signupView  *views.View
 )
 
 func homeHandler(rw http.ResponseWriter, r *http.Request) {
@@ -22,11 +22,6 @@ func homeHandler(rw http.ResponseWriter, r *http.Request) {
 func contactHandler(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "text/html")
 	must(contactView.Render(rw, nil))
-}
-
-func signupHandler(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Set("Content-Type", "text/html")
-	must(signupView.Render(rw, nil))
 }
 
 func faqHandler(rw http.ResponseWriter, r *http.Request) {
@@ -43,13 +38,14 @@ func notFound(rw http.ResponseWriter, r *http.Request) {
 func main() {
 	homeView = views.NewView("bootstrap", "views/home.gohtml")
 	contactView = views.NewView("bootstrap", "views/contact.gohtml")
-	signupView = views.NewView("bootstrap", "views/signup.gohtml")
+	usersController := controllers.NewUsers()
 
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFound)
-	router.HandleFunc("/", homeHandler)
-	router.HandleFunc("/contact", contactHandler)
-	router.HandleFunc("/signup", signupHandler)
+	router.HandleFunc("/", homeHandler).Methods("GET")
+	router.HandleFunc("/contact", contactHandler).Methods("GET")
+	router.HandleFunc("/signup", usersController.New).Methods("GET")
+	router.HandleFunc("/signup", usersController.Create).Methods("POST")
 	router.HandleFunc("/faq", faqHandler)
 	http.ListenAndServe(":5000", router)
 }
