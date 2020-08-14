@@ -11,14 +11,17 @@ var (
 
 	// LayoutDir is file path that holds templates
 	LayoutDir string = "views/layouts/"
+	// TemplateDir is assigned the directory path views are stored in
+	TemplateDir string = "views/"
 	// TemplateExtension is the extension of our templates
 	TemplateExtension string = ".gohtml"
 )
 
 // NewView is for assigning to the view type
 func NewView(layout string, files ...string) *View {
+	addTemplatePath(files)
+	addTemplateExtension(files)
 	files = append(files, layoutFiles()...)
-
 	t, err := template.ParseFiles(files...)
 	if err != nil {
 		panic(err)
@@ -54,4 +57,18 @@ func layoutFiles() []string {
 		panic(err)
 	}
 	return files
+}
+
+// addTemplatePath prepends template directory
+func addTemplatePath(files []string) {
+	for i, f := range files {
+		files[i] = TemplateDir + f
+	}
+}
+
+// addTemplateExtension appends template extension
+func addTemplateExtension(files []string) {
+	for i, f := range files {
+		files[i] = f + TemplateExtension
+	}
 }

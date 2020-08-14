@@ -10,7 +10,7 @@ import (
 // NewUsers is used to create a new Users controller
 func NewUsers() *Users {
 	return &Users{
-		NewView: views.NewView("bootstrap", "views/users/newusers.gohtml"),
+		NewView: views.NewView("bootstrap", "users/newusers"),
 	}
 }
 
