@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Users/patrickfurtak/desktop/go-gallery/models"
 	"github.com/Users/patrickfurtak/desktop/go-gallery/views"
 )
 
 // NewUsers is used to create a new Users controller
-func NewUsers() *Users {
+func NewUsers(us *models.UserService) *Users {
 	return &Users{
 		NewView: views.NewView("bootstrap", "users/newusers"),
+		us:      us,
 	}
 }
 
@@ -20,6 +22,16 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 	var form SignUpForm
 	if err := parseForm(r, &form); err != nil {
 		panic(err)
+	}
+
+	user := models.User{
+		Name:  form.Name,
+		Email: form.Email,
+	}
+
+	if err := u.us.Create(&user); err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	fmt.Fprintln(rw, form)
 }
@@ -34,9 +46,11 @@ func (u *Users) New(rw http.ResponseWriter, r *http.Request) {
 
 type Users struct {
 	NewView *views.View
+	us      *models.UserService
 }
 
 type SignUpForm struct {
+	Name     string `schema:"name"`
 	Email    string `schema:"email"`
 	Password string `schema:"password"`
 }
