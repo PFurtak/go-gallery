@@ -25,15 +25,16 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	user := models.User{
-		Name:  form.Name,
-		Email: form.Email,
+		Name:     form.Name,
+		Email:    form.Email,
+		Password: form.Password,
 	}
 
 	if err := u.us.Create(&user); err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintln(rw, form)
+	fmt.Fprintln(rw, user)
 }
 
 // New is used to render the signup form for users to create an account.
