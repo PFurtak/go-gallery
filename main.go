@@ -5,7 +5,15 @@ import (
 	"net/http"
 
 	"github.com/Users/patrickfurtak/desktop/go-gallery/controllers"
+	"github.com/Users/patrickfurtak/desktop/go-gallery/models"
 	"github.com/gorilla/mux"
+)
+
+const (
+	host   = "localhost"
+	port   = 5432
+	user   = "patrickfurtak"
+	dbname = "gogallery"
 )
 
 func faqHandler(rw http.ResponseWriter, r *http.Request) {
@@ -20,8 +28,16 @@ func notFound(rw http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable", host, port, user, dbname)
+	us, err := models.NewUserService(psqlInfo)
+	must(err)
+	defer us.Close()
+	us.AutoMigrate()
+	// us.DestructiveReset()
+
 	staticController := controllers.NewStatic()
-	usersController := controllers.NewUsers()
+	usersController := controllers.NewUsers(us)
 
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFound)
