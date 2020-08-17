@@ -22,7 +22,6 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	fmt.Fprintln(rw, form)
-
 }
 
 // New is used to render the signup form for users to create an account.
