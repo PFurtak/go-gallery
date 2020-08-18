@@ -35,7 +35,8 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintln(rw, user)
+	signIn(rw, &user)
+	http.Redirect(rw, r, "/cookietest", http.StatusFound)
 }
 
 // New is used to render the signup form for users to create an account.
@@ -46,14 +47,48 @@ func (u *Users) New(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Login is used to verify provided credentials and login if correct
+// Login is used to parse login form on submit
 // POST /login
 func (u *Users) Login(rw http.ResponseWriter, r *http.Request) {
 	form := LoginForm{}
 	if err := parseForm(r, &form); err != nil {
 		panic(err)
 	}
-	fmt.Fprintln(rw, form)
+
+	user, err := u.us.Authenticate(form.Email, form.Password)
+
+	if err != nil {
+		switch err {
+		case models.ErrNotFound:
+			fmt.Fprintln(rw, "Invalid email address.")
+		case models.ErrInvalidPassword:
+			fmt.Fprintln(rw, "Invalid password.")
+		default:
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+	signIn(rw, user)
+	http.Redirect(rw, r, "/cookietest", http.StatusFound)
+}
+
+func signIn(rw http.ResponseWriter, user *models.User) {
+	cookie := http.Cookie{
+		Name:  "email",
+		Value: user.Email,
+	}
+	http.SetCookie(rw, &cookie)
+}
+
+// CookieTest is used to display current cookie
+func (u *Users) CookieTest(rw http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("email")
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintln(rw, "Cookie Email value:", cookie.Value)
+	fmt.Fprintln(rw, cookie)
 }
 
 type Users struct {
