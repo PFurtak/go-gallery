@@ -46,14 +46,25 @@ func (u *Users) New(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Login is used to verify provided credentials and login if correct
+// Login is used to parse login form on submit
 // POST /login
 func (u *Users) Login(rw http.ResponseWriter, r *http.Request) {
 	form := LoginForm{}
 	if err := parseForm(r, &form); err != nil {
 		panic(err)
 	}
-	fmt.Fprintln(rw, form)
+
+	user, err := u.us.Authenticate(form.Email, form.Password)
+	switch err {
+	case models.ErrNotFound:
+		fmt.Fprintln(rw, "Invalid email address.")
+	case models.ErrInvalidPassword:
+		fmt.Fprintln(rw, "Invalid password.")
+	case nil:
+		fmt.Fprintln(rw, user)
+	default:
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 type Users struct {
