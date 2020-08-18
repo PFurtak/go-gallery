@@ -76,6 +76,17 @@ func (u *Users) Login(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(rw, user)
 }
 
+// CookieTest is used to display current cookie
+func (u *Users) CookieTest(rw http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("email")
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintln(rw, "Cookie Email value:", cookie.Value)
+	fmt.Fprintln(rw, cookie)
+}
+
 type Users struct {
 	NewView   *views.View
 	LoginView *views.View
