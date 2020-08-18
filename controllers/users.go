@@ -35,7 +35,8 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintln(rw, user)
+	signIn(rw, &user)
+	http.Redirect(rw, r, "/cookietest", http.StatusFound)
 }
 
 // New is used to render the signup form for users to create an account.
@@ -67,13 +68,16 @@ func (u *Users) Login(rw http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	signIn(rw, user)
+	http.Redirect(rw, r, "/cookietest", http.StatusFound)
+}
 
+func signIn(rw http.ResponseWriter, user *models.User) {
 	cookie := http.Cookie{
 		Name:  "email",
 		Value: user.Email,
 	}
 	http.SetCookie(rw, &cookie)
-	fmt.Fprintln(rw, user)
 }
 
 // CookieTest is used to display current cookie
