@@ -55,16 +55,25 @@ func (u *Users) Login(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := u.us.Authenticate(form.Email, form.Password)
-	switch err {
-	case models.ErrNotFound:
-		fmt.Fprintln(rw, "Invalid email address.")
-	case models.ErrInvalidPassword:
-		fmt.Fprintln(rw, "Invalid password.")
-	case nil:
-		fmt.Fprintln(rw, user)
-	default:
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+
+	if err != nil {
+		switch err {
+		case models.ErrNotFound:
+			fmt.Fprintln(rw, "Invalid email address.")
+		case models.ErrInvalidPassword:
+			fmt.Fprintln(rw, "Invalid password.")
+		default:
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+		return
 	}
+
+	cookie := http.Cookie{
+		Name:  "email",
+		Value: user.Email,
+	}
+	http.SetCookie(rw, &cookie)
+	fmt.Fprintln(rw, user)
 }
 
 type Users struct {
