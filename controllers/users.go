@@ -60,7 +60,6 @@ func (u *Users) Login(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := u.us.Authenticate(form.Email, form.Password)
-
 	if err != nil {
 		switch err {
 		case models.ErrNotFound:
@@ -81,7 +80,6 @@ func (u *Users) Login(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (u *Users) signIn(rw http.ResponseWriter, user *models.User) error {
-
 	if user.Remember == "" {
 		token, err := rand.RememberToken()
 		if err != nil {
