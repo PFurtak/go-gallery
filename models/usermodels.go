@@ -46,12 +46,12 @@ type UserDB interface {
 	DestructiveReset() error
 }
 
-func NewUserService(connectionInfo string) (*UserService, error) {
+func NewUserService(connectionInfo string) (UserService, error) {
 	ug, err := newUserGorm(connectionInfo)
 	if err != nil {
 		return nil, err
 	}
-	return &UserService{
+	return &userService{
 		UserDB: &userValidator{
 			UserDB: ug,
 		},
@@ -82,7 +82,13 @@ type userValidator struct {
 	UserDB
 }
 
-type UserService struct {
+type userService struct {
+	UserDB
+}
+
+// UserService is a set of methods used to manipulate and work with user model
+type UserService interface {
+	Authenticate(email, password string) (*User, error)
 	UserDB
 }
 
@@ -128,7 +134,7 @@ func (ug *userGorm) ByEmail(email string) (*User, error) {
 }
 
 // Authenticate is used to authenticate with a provided email and password
-func (us *UserService) Authenticate(email, password string) (*User, error) {
+func (us *userService) Authenticate(email, password string) (*User, error) {
 	foundUser, err := us.ByEmail(email)
 	if err != nil {
 		return nil, err

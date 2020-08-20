@@ -10,7 +10,7 @@ import (
 )
 
 // NewUsers is used to create a new Users controller
-func NewUsers(us *models.UserService) *Users {
+func NewUsers(us models.UserService) *Users {
 	return &Users{
 		NewView:   views.NewView("bootstrap", "users/newusers"),
 		LoginView: views.NewView("bootstrap", "users/login"),
@@ -121,7 +121,7 @@ func (u *Users) CookieTest(rw http.ResponseWriter, r *http.Request) {
 type Users struct {
 	NewView   *views.View
 	LoginView *views.View
-	us        *models.UserService
+	us        models.UserService
 }
 
 type SignUpForm struct {
