@@ -10,7 +10,7 @@ import (
 )
 
 // NewUsers is used to create a new Users controller
-func NewUsers(us *models.UserService) *Users {
+func NewUsers(us models.UserService) *Users {
 	return &Users{
 		NewView:   views.NewView("bootstrap", "users/newusers"),
 		LoginView: views.NewView("bootstrap", "users/login"),
@@ -60,7 +60,6 @@ func (u *Users) Login(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := u.us.Authenticate(form.Email, form.Password)
-
 	if err != nil {
 		switch err {
 		case models.ErrNotFound:
@@ -81,7 +80,6 @@ func (u *Users) Login(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (u *Users) signIn(rw http.ResponseWriter, user *models.User) error {
-
 	if user.Remember == "" {
 		token, err := rand.RememberToken()
 		if err != nil {
@@ -121,7 +119,7 @@ func (u *Users) CookieTest(rw http.ResponseWriter, r *http.Request) {
 type Users struct {
 	NewView   *views.View
 	LoginView *views.View
-	us        *models.UserService
+	us        models.UserService
 }
 
 type SignUpForm struct {
