@@ -86,7 +86,7 @@ type userValidator struct {
 
 // Update will update the provided user with provided data
 func (uv *userValidator) Update(user *User) error {
-	if err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember, uv.normalizeEmail); err != nil {
+	if err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail); err != nil {
 		return err
 	}
 	return uv.UserDB.Update(user)
@@ -94,7 +94,7 @@ func (uv *userValidator) Update(user *User) error {
 
 // Create will create the provided user
 func (uv *userValidator) Create(user *User) error {
-	if err := runUserValFuncs(user, uv.bcryptPassword, uv.setRememberIfUnset, uv.hmacRemember, uv.normalizeEmail); err != nil {
+	if err := runUserValFuncs(user, uv.bcryptPassword, uv.setRememberIfUnset, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail); err != nil {
 		return err
 	}
 	return uv.UserDB.Create(user)
@@ -161,6 +161,12 @@ func (uv *userValidator) normalizeEmail(user *User) error {
 	user.Email = strings.ToLower(user.Email)
 	user.Email = strings.TrimSpace(user.Email)
 	return nil
+}
+
+func (uv *userValidator) requireEmail(user *User) error {
+	if user.Email == "" {
+		return errors.New("Email address is required")
+	}
 }
 
 // ByEmail will normalize the email address before writing and reading to the DB
