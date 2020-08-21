@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/Users/patrickfurtak/desktop/go-gallery/hash"
 	"github.com/Users/patrickfurtak/desktop/go-gallery/rand"
@@ -85,32 +86,33 @@ type userValidator struct {
 
 // Update will update the provided user with provided data
 func (uv *userValidator) Update(user *User) error {
-	if err := runUserValFuncs(user, uv.bcryptPassword); err != nil {
+	if err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail); err != nil {
 		return err
-	}
-	if user.Remember != "" {
-		user.RememberHash = uv.hmac.Hash(user.Remember)
 	}
 	return uv.UserDB.Update(user)
 }
 
 // Create will create the provided user
 func (uv *userValidator) Create(user *User) error {
-	if err := runUserValFuncs(user, uv.bcryptPassword); err != nil {
+	if err := runUserValFuncs(user, uv.bcryptPassword, uv.setRememberIfUnset, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail); err != nil {
 		return err
 	}
-	if user.Remember == "" {
-		token, err := rand.RememberToken()
-		if err != nil {
-			return err
-		}
-		user.Remember = token
-	}
-	user.RememberHash = uv.hmac.Hash(user.Remember)
 	return uv.UserDB.Create(user)
 }
 
 type userValFunc func(*User) error
+
+func (uv *userValidator) setRememberIfUnset(user *User) error {
+	if user.Remember != "" {
+		return nil
+	}
+	token, err := rand.RememberToken()
+	if err != nil {
+		return err
+	}
+	user.Remember = token
+	return nil
+}
 
 func runUserValFuncs(user *User, fns ...userValFunc) error {
 	for _, fn := range fns {
@@ -136,21 +138,68 @@ func (uv *userValidator) bcryptPassword(user *User) error {
 	return nil
 }
 
+func (uv *userValidator) hmacRemember(user *User) error {
+	if user.Remember == "" {
+		return nil
+	}
+	user.Remember = uv.hmac.Hash(user.Remember)
+	return nil
+}
+
 func (ug *userGorm) Create(user *User) error {
 	return ug.db.Create(user).Error
 }
 
+func (uv *userValidator) idValidate(user *User) error {
+	if user.ID <= 0 {
+		return ErrInvalidID
+	}
+	return nil
+}
+
+func (uv *userValidator) normalizeEmail(user *User) error {
+	user.Email = strings.ToLower(user.Email)
+	user.Email = strings.TrimSpace(user.Email)
+	return nil
+}
+
+func (uv *userValidator) requireEmail(user *User) error {
+	if user.Email == "" {
+		return errors.New("Email address is required")
+	}
+}
+
+// ByEmail will normalize the email address before writing and reading to the DB
+func (uv *userValidator) ByEmail(email string) (*User, error) {
+	user := User{
+		Email: email,
+	}
+	err := runUserValFuncs(&user, uv.normalizeEmail)
+	if err != nil {
+		return nil, err
+	}
+	return uv.UserDB.ByEmail(user.Email)
+}
+
 // Delete will remove user from DB with the provided ID
 func (uv *userValidator) Delete(id uint) error {
-	if id == 0 {
-		return ErrInvalidID
+	var user User
+	user.ID = id
+	err := runUserValFuncs(&user, uv.idValidate)
+	if err != nil {
+		return err
 	}
 	return uv.UserDB.Delete(id)
 }
 
 func (uv *userValidator) ByRemember(token string) (*User, error) {
-	rememberHash := uv.hmac.Hash(token)
-	return uv.UserDB.ByRemember(rememberHash)
+	user := User{
+		Remember: token,
+	}
+	if err := runUserValFuncs(&user, uv.hmacRemember); err != nil {
+		return nil, err
+	}
+	return uv.UserDB.ByRemember(user.RememberHash)
 }
 
 type userService struct {
