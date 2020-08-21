@@ -32,6 +32,12 @@ var (
 
 	// ErrPasswordNotHashed is returned when a password is not hashed
 	ErrPasswordNotHashed = errors.New("models: Password is not hashed")
+
+	// ErrRememberTooShort is returned when a remember token has fewer than 32 bytes
+	ErrRememberTooShort = errors.New("models: Remember token has less than 32 bytes, too short")
+
+	// ErrRememberNotHashed is returned when a remember token is not hashed
+	ErrRememberNotHashed = errors.New("models: Remember token is not hashed")
 )
 
 const userPwPepper = "sadjfhusdfjhsdfbchfdsssswqdnfgchdnsdfhdskjdbfuv"
@@ -102,7 +108,18 @@ func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
 
 // Update will update the provided user with provided data
 func (uv *userValidator) Update(user *User) error {
-	if err := runUserValFuncs(user, uv.pwLengthCheck, uv.bcryptPassword, uv.pwHashRequired, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail, uv.emailFormat, uv.emailExistCheck); err != nil {
+	if err := runUserValFuncs(
+		user,
+		uv.pwLengthCheck,
+		uv.bcryptPassword,
+		uv.pwHashRequired,
+		uv.rememberMinBytes,
+		uv.hmacRemember,
+		uv.rememberHashRequired,
+		uv.normalizeEmail,
+		uv.requireEmail,
+		uv.emailFormat,
+		uv.emailExistCheck); err != nil {
 		return err
 	}
 	return uv.UserDB.Update(user)
@@ -110,7 +127,20 @@ func (uv *userValidator) Update(user *User) error {
 
 // Create will create the provided user
 func (uv *userValidator) Create(user *User) error {
-	if err := runUserValFuncs(user, uv.pwRequired, uv.pwLengthCheck, uv.bcryptPassword, uv.pwHashRequired, uv.setRememberIfUnset, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail, uv.emailFormat, uv.emailExistCheck); err != nil {
+	if err := runUserValFuncs(
+		user,
+		uv.pwRequired,
+		uv.pwLengthCheck,
+		uv.bcryptPassword,
+		uv.pwHashRequired,
+		uv.setRememberIfUnset,
+		uv.rememberMinBytes,
+		uv.hmacRemember,
+		uv.rememberHashRequired,
+		uv.normalizeEmail,
+		uv.requireEmail,
+		uv.emailFormat,
+		uv.emailExistCheck); err != nil {
 		return err
 	}
 	return uv.UserDB.Create(user)
@@ -193,6 +223,13 @@ func (uv *userValidator) pwHashRequired(user *User) error {
 	return nil
 }
 
+func (uv *userValidator) rememberHashRequired(user *User) error {
+	if user.RememberHash == "" {
+		return ErrRememberNotHashed
+	}
+	return nil
+}
+
 func (uv *userValidator) hmacRemember(user *User) error {
 	if user.Remember == "" {
 		return nil
@@ -263,6 +300,20 @@ func (uv *userValidator) ByRemember(token string) (*User, error) {
 		return nil, err
 	}
 	return uv.UserDB.ByRemember(user.RememberHash)
+}
+
+func (uv *userValidator) rememberMinBytes(user *User) error {
+	if user.Remember == "" {
+		return nil
+	}
+	n, err := rand.NBytes(user.Remember)
+	if err != nil {
+		return nil
+	}
+	if n < 32 {
+		return ErrRememberTooShort
+	}
+	return nil
 }
 
 type userService struct {
