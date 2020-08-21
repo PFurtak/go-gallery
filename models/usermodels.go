@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/Users/patrickfurtak/desktop/go-gallery/hash"
 	"github.com/Users/patrickfurtak/desktop/go-gallery/rand"
@@ -85,7 +86,7 @@ type userValidator struct {
 
 // Update will update the provided user with provided data
 func (uv *userValidator) Update(user *User) error {
-	if err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember); err != nil {
+	if err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember, uv.normalizeEmail); err != nil {
 		return err
 	}
 	return uv.UserDB.Update(user)
@@ -93,7 +94,7 @@ func (uv *userValidator) Update(user *User) error {
 
 // Create will create the provided user
 func (uv *userValidator) Create(user *User) error {
-	if err := runUserValFuncs(user, uv.bcryptPassword, uv.setRememberIfUnset, uv.hmacRemember); err != nil {
+	if err := runUserValFuncs(user, uv.bcryptPassword, uv.setRememberIfUnset, uv.hmacRemember, uv.normalizeEmail); err != nil {
 		return err
 	}
 	return uv.UserDB.Create(user)
@@ -154,6 +155,24 @@ func (uv *userValidator) idValidate(user *User) error {
 		return ErrInvalidID
 	}
 	return nil
+}
+
+func (uv *userValidator) normalizeEmail(user *User) error {
+	user.Email = strings.ToLower(user.Email)
+	user.Email = strings.TrimSpace(user.Email)
+	return nil
+}
+
+// ByEmail will normalize the email address before writing and reading to the DB
+func (uv *userValidator) ByEmail(email string) (*User, error) {
+	user := User{
+		Email: email,
+	}
+	err := runUserValFuncs(&user, uv.normalizeEmail)
+	if err != nil {
+		return nil, err
+	}
+	return uv.UserDB.ByEmail(user.Email)
 }
 
 // Delete will remove user from DB with the provided ID
