@@ -23,6 +23,15 @@ var (
 
 	// ErrInvalidPassword is returned on failed password and hash match
 	ErrInvalidPassword = errors.New("models: Password invalid")
+
+	// ErrInvalidPasswordLength is returned on failed password length check
+	ErrInvalidPasswordLength = errors.New("models: Password must be atleast 8 chars long")
+
+	// ErrPasswordRequired is returned when the supplied password is empty
+	ErrPasswordRequired = errors.New("models: Password field is required")
+
+	// ErrPasswordNotHashed is returned when a password is not hashed
+	ErrPasswordNotHashed = errors.New("models: Password is not hashed")
 )
 
 const userPwPepper = "sadjfhusdfjhsdfbchfdsssswqdnfgchdnsdfhdskjdbfuv"
@@ -93,7 +102,7 @@ func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
 
 // Update will update the provided user with provided data
 func (uv *userValidator) Update(user *User) error {
-	if err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail, uv.emailFormat, uv.emailExistCheck); err != nil {
+	if err := runUserValFuncs(user, uv.pwLengthCheck, uv.bcryptPassword, uv.pwHashRequired, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail, uv.emailFormat, uv.emailExistCheck); err != nil {
 		return err
 	}
 	return uv.UserDB.Update(user)
@@ -101,7 +110,7 @@ func (uv *userValidator) Update(user *User) error {
 
 // Create will create the provided user
 func (uv *userValidator) Create(user *User) error {
-	if err := runUserValFuncs(user, uv.bcryptPassword, uv.setRememberIfUnset, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail, uv.emailFormat, uv.emailExistCheck); err != nil {
+	if err := runUserValFuncs(user, uv.pwRequired, uv.pwLengthCheck, uv.bcryptPassword, uv.pwHashRequired, uv.setRememberIfUnset, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail, uv.emailFormat, uv.emailExistCheck); err != nil {
 		return err
 	}
 	return uv.UserDB.Create(user)
@@ -157,6 +166,30 @@ func (uv *userValidator) bcryptPassword(user *User) error {
 	}
 	user.PasswordHash = string(hashedBytes)
 	user.Password = ""
+	return nil
+}
+
+func (uv *userValidator) pwLengthCheck(user *User) error {
+	if user.Password == "" {
+		return nil
+	}
+	if len(user.Password) < 8 {
+		return ErrInvalidPasswordLength
+	}
+	return nil
+}
+
+func (uv *userValidator) pwRequired(user *User) error {
+	if user.Password == "" {
+		return ErrPasswordRequired
+	}
+	return nil
+}
+
+func (uv *userValidator) pwHashRequired(user *User) error {
+	if user.PasswordHash == "" {
+		return ErrPasswordNotHashed
+	}
 	return nil
 }
 
