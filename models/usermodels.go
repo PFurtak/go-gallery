@@ -149,10 +149,20 @@ func (ug *userGorm) Create(user *User) error {
 	return ug.db.Create(user).Error
 }
 
+func (uv *userValidator) idValidate(user *User) error {
+	if user.ID <= 0 {
+		return ErrInvalidID
+	}
+	return nil
+}
+
 // Delete will remove user from DB with the provided ID
 func (uv *userValidator) Delete(id uint) error {
-	if id == 0 {
-		return ErrInvalidID
+	var user User
+	user.ID = id
+	err := runUserValFuncs(&user, uv.idValidate)
+	if err != nil {
+		return err
 	}
 	return uv.UserDB.Delete(id)
 }
