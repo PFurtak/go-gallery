@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 
 	"github.com/Users/patrickfurtak/desktop/go-gallery/hash"
@@ -22,6 +23,21 @@ var (
 
 	// ErrInvalidPassword is returned on failed password and hash match
 	ErrInvalidPassword = errors.New("models: Password invalid")
+
+	// ErrInvalidPasswordLength is returned on failed password length check
+	ErrInvalidPasswordLength = errors.New("models: Password must be atleast 8 chars long")
+
+	// ErrPasswordRequired is returned when the supplied password is empty
+	ErrPasswordRequired = errors.New("models: Password field is required")
+
+	// ErrPasswordNotHashed is returned when a password is not hashed
+	ErrPasswordNotHashed = errors.New("models: Password is not hashed")
+
+	// ErrRememberTooShort is returned when a remember token has fewer than 32 bytes
+	ErrRememberTooShort = errors.New("models: Remember token has less than 32 bytes, too short")
+
+	// ErrRememberNotHashed is returned when a remember token is not hashed
+	ErrRememberNotHashed = errors.New("models: Remember token is not hashed")
 )
 
 const userPwPepper = "sadjfhusdfjhsdfbchfdsssswqdnfgchdnsdfhdskjdbfuv"
@@ -53,10 +69,7 @@ func NewUserService(connectionInfo string) (UserService, error) {
 		return nil, err
 	}
 	hmac := hash.NewHMAC(hmacKey)
-	uv := &userValidator{
-		hmac:   hmac,
-		UserDB: ug,
-	}
+	uv := newUserValidator(ug, hmac)
 	return &userService{
 		UserDB: uv,
 	}, nil
@@ -81,12 +94,32 @@ type userGorm struct {
 
 type userValidator struct {
 	UserDB
-	hmac hash.HMAC
+	hmac       hash.HMAC
+	emailRegex *regexp.Regexp
+}
+
+func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
+	return &userValidator{
+		UserDB:     udb,
+		hmac:       hmac,
+		emailRegex: regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,16}$`),
+	}
 }
 
 // Update will update the provided user with provided data
 func (uv *userValidator) Update(user *User) error {
-	if err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail); err != nil {
+	if err := runUserValFuncs(
+		user,
+		uv.pwLengthCheck,
+		uv.bcryptPassword,
+		uv.pwHashRequired,
+		uv.rememberMinBytes,
+		uv.hmacRemember,
+		uv.rememberHashRequired,
+		uv.normalizeEmail,
+		uv.requireEmail,
+		uv.emailFormat,
+		uv.emailExistCheck); err != nil {
 		return err
 	}
 	return uv.UserDB.Update(user)
@@ -94,10 +127,38 @@ func (uv *userValidator) Update(user *User) error {
 
 // Create will create the provided user
 func (uv *userValidator) Create(user *User) error {
-	if err := runUserValFuncs(user, uv.bcryptPassword, uv.setRememberIfUnset, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail); err != nil {
+	if err := runUserValFuncs(
+		user,
+		uv.pwRequired,
+		uv.pwLengthCheck,
+		uv.bcryptPassword,
+		uv.pwHashRequired,
+		uv.setRememberIfUnset,
+		uv.rememberMinBytes,
+		uv.hmacRemember,
+		uv.rememberHashRequired,
+		uv.normalizeEmail,
+		uv.requireEmail,
+		uv.emailFormat,
+		uv.emailExistCheck); err != nil {
 		return err
 	}
 	return uv.UserDB.Create(user)
+}
+
+func (uv *userValidator) emailExistCheck(user *User) error {
+	existing, err := uv.ByEmail(user.Email)
+	if err == ErrNotFound {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+	if user.ID != existing.ID {
+		return errors.New("models: this email has already been used to sign up")
+	}
+	return nil
 }
 
 type userValFunc func(*User) error
@@ -138,6 +199,37 @@ func (uv *userValidator) bcryptPassword(user *User) error {
 	return nil
 }
 
+func (uv *userValidator) pwLengthCheck(user *User) error {
+	if user.Password == "" {
+		return nil
+	}
+	if len(user.Password) < 8 {
+		return ErrInvalidPasswordLength
+	}
+	return nil
+}
+
+func (uv *userValidator) pwRequired(user *User) error {
+	if user.Password == "" {
+		return ErrPasswordRequired
+	}
+	return nil
+}
+
+func (uv *userValidator) pwHashRequired(user *User) error {
+	if user.PasswordHash == "" {
+		return ErrPasswordNotHashed
+	}
+	return nil
+}
+
+func (uv *userValidator) rememberHashRequired(user *User) error {
+	if user.RememberHash == "" {
+		return ErrRememberNotHashed
+	}
+	return nil
+}
+
 func (uv *userValidator) hmacRemember(user *User) error {
 	if user.Remember == "" {
 		return nil
@@ -163,10 +255,18 @@ func (uv *userValidator) normalizeEmail(user *User) error {
 	return nil
 }
 
+func (uv *userValidator) emailFormat(user *User) error {
+	if !uv.emailRegex.MatchString(user.Email) {
+		return errors.New("Email address is not valid")
+	}
+	return nil
+}
+
 func (uv *userValidator) requireEmail(user *User) error {
 	if user.Email == "" {
 		return errors.New("Email address is required")
 	}
+	return nil
 }
 
 // ByEmail will normalize the email address before writing and reading to the DB
@@ -200,6 +300,20 @@ func (uv *userValidator) ByRemember(token string) (*User, error) {
 		return nil, err
 	}
 	return uv.UserDB.ByRemember(user.RememberHash)
+}
+
+func (uv *userValidator) rememberMinBytes(user *User) error {
+	if user.Remember == "" {
+		return nil
+	}
+	n, err := rand.NBytes(user.Remember)
+	if err != nil {
+		return nil
+	}
+	if n < 32 {
+		return ErrRememberTooShort
+	}
+	return nil
 }
 
 type userService struct {
