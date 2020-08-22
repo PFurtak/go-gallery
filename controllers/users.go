@@ -52,13 +52,23 @@ func (u *Users) New(rw http.ResponseWriter, r *http.Request) {
 		Message   string
 	}
 
+	type Data struct {
+		Alert Alert
+		Yield interface{}
+	}
+
 	a := Alert{
 		Level:     "success",
 		AlertType: "Success!",
 		Message:   "Your account was successfully created!",
 	}
 
-	if err := u.NewView.Render(rw, a); err != nil {
+	d := Data{
+		Alert: a,
+		Yield: "hello!",
+	}
+
+	if err := u.NewView.Render(rw, d); err != nil {
 		panic(err)
 	}
 }
