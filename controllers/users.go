@@ -46,26 +46,12 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 // New is used to render the signup form for users to create an account.
 // GET /signup
 func (u *Users) New(rw http.ResponseWriter, r *http.Request) {
-	type Alert struct {
-		Level     string
-		AlertType string
-		Message   string
-	}
-
-	type Data struct {
-		Alert Alert
-		Yield interface{}
-	}
-
-	a := Alert{
-		Level:     "success",
-		AlertType: "Success!",
-		Message:   "Your account was successfully created!",
-	}
-
-	d := Data{
-		Alert: a,
-		Yield: "hello!",
+	d := views.Data{
+		Alert: &views.Alert{
+			Level:     views.AlertLvlError,
+			AlertType: views.AlertTypeError,
+			Message:   "Oh no! ;[",
+		},
 	}
 
 	if err := u.NewView.Render(rw, d); err != nil {
