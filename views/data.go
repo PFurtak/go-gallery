@@ -14,6 +14,7 @@ const (
 	AlertTypeInfo    = "Info: "
 
 	// AlertMessages modify the text displayed in the alert
+	AlertMessageGeneric = "Something went wrong, please contact us if issue persists."
 )
 
 // Alert is used to render bootstrap alert messages
