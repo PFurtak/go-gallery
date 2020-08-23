@@ -1,0 +1,9 @@
+{{define "alert"}}
+<br>
+<div class="alert alert-{{.Level}} alert-dismissible fade show" role="alert">
+  <strong>{{.AlertType}}</strong> {{.Message}}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+{{ end }}

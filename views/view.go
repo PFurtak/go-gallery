@@ -47,6 +47,14 @@ func (v *View) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 // Render is used to render view with predefined layout
 func (v *View) Render(rw http.ResponseWriter, data interface{}) error {
 	rw.Header().Set("Content-Type", "text/html")
+	switch data.(type) {
+	case Data:
+		// do nothing
+	default:
+		data = Data{
+			Yield: data,
+		}
+	}
 	return v.Template.ExecuteTemplate(rw, v.Layout, data)
 }
 

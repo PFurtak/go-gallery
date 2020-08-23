@@ -223,18 +223,18 @@ func (uv *userValidator) pwHashRequired(user *User) error {
 	return nil
 }
 
-func (uv *userValidator) rememberHashRequired(user *User) error {
-	if user.RememberHash == "" {
-		return ErrRememberNotHashed
-	}
-	return nil
-}
-
 func (uv *userValidator) hmacRemember(user *User) error {
 	if user.Remember == "" {
 		return nil
 	}
-	user.Remember = uv.hmac.Hash(user.Remember)
+	user.RememberHash = uv.hmac.Hash(user.Remember)
+	return nil
+}
+
+func (uv *userValidator) rememberHashRequired(user *User) error {
+	if user.RememberHash == "" {
+		return ErrRememberNotHashed
+	}
 	return nil
 }
 

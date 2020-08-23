@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/Users/patrickfurtak/desktop/go-gallery/models"
@@ -21,9 +22,17 @@ func NewUsers(us models.UserService) *Users {
 // Create is used to create a new user account from signup form
 // POST /signup
 func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
+	var vd views.Data
 	var form SignUpForm
 	if err := parseForm(r, &form); err != nil {
-		panic(err)
+		log.Println(err)
+		vd.Alert = &views.Alert{
+			Level:     views.AlertLvlError,
+			AlertType: views.AlertTypeError,
+			Message:   views.AlertMessageGeneric,
+		}
+		u.NewView.Render(rw, vd)
+		return
 	}
 
 	user := models.User{
@@ -33,12 +42,18 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := u.us.Create(&user); err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		vd.Alert = &views.Alert{
+			Level:     views.AlertLvlError,
+			AlertType: views.AlertTypeError,
+			Message:   err.Error(),
+		}
+		u.NewView.Render(rw, vd)
 		return
 	}
 	err := u.signIn(rw, &user)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		http.Redirect(rw, r, "/login", http.StatusFound)
+		return
 	}
 	http.Redirect(rw, r, "/cookietest", http.StatusFound)
 }
