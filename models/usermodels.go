@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"regexp"
 	"strings"
 
@@ -11,33 +10,6 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
 	"golang.org/x/crypto/bcrypt"
-)
-
-var (
-	// ErrNotFound is returned when a DB resource is not found
-	ErrNotFound = errors.New("models: resource not found")
-
-	// ErrInvalidID is returned when an invalid ID
-	// is passed into method
-	ErrInvalidID = errors.New("models: ID provided was invalid")
-
-	// ErrInvalidPassword is returned on failed password and hash match
-	ErrInvalidPassword = errors.New("models: Password invalid")
-
-	// ErrInvalidPasswordLength is returned on failed password length check
-	ErrInvalidPasswordLength = errors.New("models: Password must be atleast 8 chars long")
-
-	// ErrPasswordRequired is returned when the supplied password is empty
-	ErrPasswordRequired = errors.New("models: Password field is required")
-
-	// ErrPasswordNotHashed is returned when a password is not hashed
-	ErrPasswordNotHashed = errors.New("models: Password is not hashed")
-
-	// ErrRememberTooShort is returned when a remember token has fewer than 32 bytes
-	ErrRememberTooShort = errors.New("models: Remember token has less than 32 bytes, too short")
-
-	// ErrRememberNotHashed is returned when a remember token is not hashed
-	ErrRememberNotHashed = errors.New("models: Remember token is not hashed")
 )
 
 const userPwPepper = "sadjfhusdfjhsdfbchfdsssswqdnfgchdnsdfhdskjdbfuv"
@@ -156,7 +128,7 @@ func (uv *userValidator) emailExistCheck(user *User) error {
 		return err
 	}
 	if user.ID != existing.ID {
-		return errors.New("models: this email has already been used to sign up")
+		return ErrEmailAlreadyExists
 	}
 	return nil
 }
@@ -257,14 +229,14 @@ func (uv *userValidator) normalizeEmail(user *User) error {
 
 func (uv *userValidator) emailFormat(user *User) error {
 	if !uv.emailRegex.MatchString(user.Email) {
-		return errors.New("Email address is not valid")
+		return ErrInvalidEmailFormat
 	}
 	return nil
 }
 
 func (uv *userValidator) requireEmail(user *User) error {
 	if user.Email == "" {
-		return errors.New("Email address is required")
+		return ErrEmailRequired
 	}
 	return nil
 }

@@ -26,11 +26,7 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 	var form SignUpForm
 	if err := parseForm(r, &form); err != nil {
 		log.Println(err)
-		vd.Alert = &views.Alert{
-			Level:     views.AlertLvlError,
-			AlertType: views.AlertTypeError,
-			Message:   views.AlertMessageGeneric,
-		}
+		vd.SetAlert(err)
 		u.NewView.Render(rw, vd)
 		return
 	}
@@ -42,11 +38,7 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := u.us.Create(&user); err != nil {
-		vd.Alert = &views.Alert{
-			Level:     views.AlertLvlError,
-			AlertType: views.AlertTypeError,
-			Message:   err.Error(),
-		}
+		vd.SetAlert(err)
 		u.NewView.Render(rw, vd)
 		return
 	}
@@ -61,34 +53,40 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 // New is used to render the signup form for users to create an account.
 // GET /signup
 func (u *Users) New(rw http.ResponseWriter, r *http.Request) {
-	if err := u.NewView.Render(rw, nil); err != nil {
-		panic(err)
-	}
+	u.NewView.Render(rw, nil)
 }
 
 // Login is used to parse login form on submit
 // POST /login
 func (u *Users) Login(rw http.ResponseWriter, r *http.Request) {
+	vd := views.Data{}
 	form := LoginForm{}
 	if err := parseForm(r, &form); err != nil {
-		panic(err)
+		log.Println(err)
+		vd.SetAlert(err)
+		u.LoginView.Render(rw, vd)
+		return
 	}
 
 	user, err := u.us.Authenticate(form.Email, form.Password)
 	if err != nil {
 		switch err {
 		case models.ErrNotFound:
-			fmt.Fprintln(rw, "Invalid email address.")
-		case models.ErrInvalidPassword:
-			fmt.Fprintln(rw, "Invalid password.")
+			vd.Alert = &views.Alert{
+				Level:     views.AlertLvlError,
+				AlertType: views.AlertTypeError,
+				Message:   "Invalid email address",
+			}
 		default:
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			vd.SetAlert(err)
 		}
+		u.LoginView.Render(rw, vd)
 		return
 	}
 	err = u.signIn(rw, user)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		vd.SetAlert(err)
+		u.LoginView.Render(rw, vd)
 		return
 	}
 	http.Redirect(rw, r, "/cookietest", http.StatusFound)
