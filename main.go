@@ -30,14 +30,14 @@ func notFound(rw http.ResponseWriter, r *http.Request) {
 func main() {
 
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable", host, port, user, dbname)
-	us, err := models.NewUserService(psqlInfo)
+	services, err := models.NewServices(psqlInfo)
 	must(err)
-	defer us.Close()
-	us.AutoMigrate()
+	// defer us.Close()
+	// us.AutoMigrate()
 	// us.DestructiveReset()
 
 	staticController := controllers.NewStatic()
-	usersController := controllers.NewUsers(us)
+	usersController := controllers.NewUsers(services.User)
 
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFound)
