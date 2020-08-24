@@ -61,26 +61,34 @@ func (u *Users) New(rw http.ResponseWriter, r *http.Request) {
 // Login is used to parse login form on submit
 // POST /login
 func (u *Users) Login(rw http.ResponseWriter, r *http.Request) {
+	vd := views.Data{}
 	form := LoginForm{}
 	if err := parseForm(r, &form); err != nil {
-		panic(err)
+		log.Println(err)
+		vd.SetAlert(err)
+		u.LoginView.Render(rw, vd)
+		return
 	}
 
 	user, err := u.us.Authenticate(form.Email, form.Password)
 	if err != nil {
 		switch err {
 		case models.ErrNotFound:
-			fmt.Fprintln(rw, "Invalid email address.")
-		case models.ErrInvalidPassword:
-			fmt.Fprintln(rw, "Invalid password.")
+			vd.Alert = &views.Alert{
+				Level:     views.AlertLvlError,
+				AlertType: views.AlertTypeError,
+				Message:   "Invalid email address",
+			}
 		default:
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			vd.SetAlert(err)
 		}
+		u.LoginView.Render(rw, vd)
 		return
 	}
 	err = u.signIn(rw, user)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		vd.SetAlert(err)
+		u.LoginView.Render(rw, vd)
 		return
 	}
 	http.Redirect(rw, r, "/cookietest", http.StatusFound)
