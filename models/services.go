@@ -9,15 +9,16 @@ func NewServices(connectionInfo string) (*Services, error) {
 	}
 	db.LogMode(true)
 	return &Services{
-		User: NewUserService(db),
-		db:   db,
+		User:    NewUserService(db),
+		Gallery: NewGalleryService(db),
+		db:      db,
 	}, nil
 }
 
 type Services struct {
-	GalleryService GalleryService
-	User           UserService
-	db             *gorm.DB
+	Gallery GalleryService
+	User    UserService
+	db      *gorm.DB
 }
 
 // DestructiveReset drops all tables and rebuilds
