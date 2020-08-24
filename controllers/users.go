@@ -26,11 +26,7 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 	var form SignUpForm
 	if err := parseForm(r, &form); err != nil {
 		log.Println(err)
-		vd.Alert = &views.Alert{
-			Level:     views.AlertLvlError,
-			AlertType: views.AlertTypeError,
-			Message:   views.AlertMessageGeneric,
-		}
+		vd.SetAlert(err)
 		u.NewView.Render(rw, vd)
 		return
 	}
@@ -42,11 +38,7 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := u.us.Create(&user); err != nil {
-		vd.Alert = &views.Alert{
-			Level:     views.AlertLvlError,
-			AlertType: views.AlertTypeError,
-			Message:   err.Error(),
-		}
+		vd.SetAlert(err)
 		u.NewView.Render(rw, vd)
 		return
 	}
