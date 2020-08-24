@@ -53,9 +53,7 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 // New is used to render the signup form for users to create an account.
 // GET /signup
 func (u *Users) New(rw http.ResponseWriter, r *http.Request) {
-	if err := u.NewView.Render(rw, nil); err != nil {
-		panic(err)
-	}
+	u.NewView.Render(rw, nil)
 }
 
 // Login is used to parse login form on submit
