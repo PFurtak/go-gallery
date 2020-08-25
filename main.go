@@ -53,6 +53,7 @@ func main() {
 
 	//Gallery routes
 	router.Handle("/galleries/new", galleriesController.New).Methods("GET")
+	router.HandleFunc("/galleries", galleriesController.Create).Methods("POST")
 
 	http.ListenAndServe(":5000", router)
 }
