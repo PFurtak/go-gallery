@@ -1,0 +1,26 @@
+{{define "yield"}}
+<br>
+<div class="row justify-content-center">
+<div class="col-md-6 col-md-offset-3">
+<div class="card">
+  <h5 class="card-header bg-primary text-white">Create A New Gallery</h5>
+  <div class="card-body">
+    <h5 class="card-title">New Gallery</h5>
+    <p class="card-text">{{template "galleryForm"}}</p>
+  </div>
+</div>
+</div>
+</div>
+
+{{end}}
+
+{{define "galleryForm"}}
+<form action="/galleries" method="POST">
+ <div class="form-group">
+    <label for="title">Title</label>
+    <input name="title" type="text" class="form-control" id="title">
+  </div>
+  
+  <button type="submit" class="btn btn-primary">Create</button>
+</form>
+{{ end }}

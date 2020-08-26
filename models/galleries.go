@@ -35,6 +35,40 @@ type galleryValidator struct {
 	GalleryDB
 }
 
+type galleryValFunc func(*Gallery) error
+
+func runGalleryValFuncs(gallery *Gallery, fns ...galleryValFunc) error {
+	for _, fn := range fns {
+		if err := fn(gallery); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (gv *galleryValidator) Create(gallery *Gallery) error {
+	if err := runGalleryValFuncs(gallery,
+		gv.titleRequired,
+		gv.userIDRequired,
+	); err != nil {
+		return err
+	}
+	return gv.GalleryDB.Create(gallery)
+}
+
+func (gv *galleryValidator) titleRequired(g *Gallery) error {
+	if g.Title == "" {
+		return ErrTitleRequired
+	}
+	return nil
+}
+func (gv *galleryValidator) userIDRequired(g *Gallery) error {
+	if g.UserID <= 0 {
+		return ErrUserIDRequired
+	}
+	return nil
+}
+
 var _ GalleryDB = &galleryGorm{}
 
 func (gg *galleryGorm) Create(gallery *Gallery) error {
