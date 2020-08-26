@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Users/patrickfurtak/desktop/go-gallery/controllers"
+	"github.com/Users/patrickfurtak/desktop/go-gallery/middleware"
 	"github.com/Users/patrickfurtak/desktop/go-gallery/models"
 	"github.com/gorilla/mux"
 )
@@ -52,8 +53,9 @@ func main() {
 	router.HandleFunc("/faq", faqHandler)
 
 	//Gallery routes
-	router.Handle("/galleries/new", galleriesController.New).Methods("GET")
-	router.HandleFunc("/galleries", galleriesController.Create).Methods("POST")
+	requireUserMw := middleware.RequireUser{UserService: services.User}
+	router.Handle("/galleries/new", requireUserMw.Apply(galleriesController.New)).Methods("GET")
+	router.HandleFunc("/galleries", requireUserMw.Applyfn(galleriesController.Create)).Methods("POST")
 
 	http.ListenAndServe(":5000", router)
 }
