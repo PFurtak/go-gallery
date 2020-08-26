@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/Users/patrickfurtak/desktop/go-gallery/context"
 	"github.com/Users/patrickfurtak/desktop/go-gallery/models"
 	"github.com/Users/patrickfurtak/desktop/go-gallery/views"
 )
@@ -35,9 +36,14 @@ func (g *Galleries) Create(rw http.ResponseWriter, r *http.Request) {
 		g.New.Render(rw, vd)
 		return
 	}
-
+	user := context.User(r.Context())
+	if user == nil {
+		http.Redirect(rw, r, "/login", http.StatusFound)
+	}
+	fmt.Println("Create user: ", user)
 	gallery := models.Gallery{
-		Title: form.Title,
+		Title:  form.Title,
+		UserID: user.ID,
 	}
 
 	if err := g.gs.Create(&gallery); err != nil {
