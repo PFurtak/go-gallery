@@ -59,6 +59,8 @@ func main() {
 	router.Handle("/galleries/new", requireUserMw.Apply(galleriesController.New)).Methods("GET")
 	router.HandleFunc("/galleries", requireUserMw.Applyfn(galleriesController.Create)).Methods("POST")
 	router.HandleFunc("/galleries/{id:[0-9]+}", galleriesController.Show).Methods("GET").Name(controllers.ShowGallery)
+	router.HandleFunc("/galleries/{id:[0-9]+}/edit", requireUserMw.Applyfn(galleriesController.Edit)).Methods("GET")
+
 	http.ListenAndServe(":5000", router)
 }
 
