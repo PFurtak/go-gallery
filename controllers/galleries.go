@@ -154,3 +154,25 @@ func (g *Galleries) galleryByID(rw http.ResponseWriter, r *http.Request) (*model
 	}
 	return gallery, nil
 }
+
+// POST /galleries/:id/delete
+func (g *Galleries) Delete(rw http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryByID(rw, r)
+	if err != nil {
+		return
+	}
+	user := context.User(r.Context())
+	if gallery.UserID != user.ID {
+		http.Error(rw, "Gallery not found", http.StatusNotFound)
+		return
+	}
+	var vd views.Data
+	err = g.gs.Delete(gallery.ID)
+	if err != nil {
+		vd.SetAlert(err)
+		vd.Yield = gallery
+		g.EditView.Render(rw, vd)
+		return
+	}
+	fmt.Fprintln(rw, "succesfully deleted!")
+}
