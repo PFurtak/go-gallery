@@ -37,11 +37,13 @@ func main() {
 	services.AutoMigrate()
 	// services.DestructiveReset()
 
+	router := mux.NewRouter()
 	staticController := controllers.NewStatic()
 	usersController := controllers.NewUsers(services.User)
-	galleriesController := controllers.NewGalleries(services.Gallery)
+	galleriesController := controllers.NewGalleries(services.Gallery, router)
 
-	router := mux.NewRouter()
+	requireUserMw := middleware.RequireUser{UserService: services.User}
+
 	router.NotFoundHandler = http.HandlerFunc(notFound)
 	router.Handle("/", staticController.Home).Methods("GET")
 	router.Handle("/contact", staticController.Contact).Methods("GET")
@@ -53,9 +55,12 @@ func main() {
 	router.HandleFunc("/faq", faqHandler)
 
 	//Gallery routes
-	requireUserMw := middleware.RequireUser{UserService: services.User}
+
 	router.Handle("/galleries/new", requireUserMw.Apply(galleriesController.New)).Methods("GET")
 	router.HandleFunc("/galleries", requireUserMw.Applyfn(galleriesController.Create)).Methods("POST")
+	router.HandleFunc("/galleries/{id:[0-9]+}", galleriesController.Show).Methods("GET").Name(controllers.ShowGallery)
+	router.HandleFunc("/galleries/{id:[0-9]+}/edit", requireUserMw.Applyfn(galleriesController.Edit)).Methods("GET")
+	router.HandleFunc("/galleries/{id:[0-9]+}/update", requireUserMw.Applyfn(galleriesController.Update)).Methods("POST")
 
 	http.ListenAndServe(":5000", router)
 }
