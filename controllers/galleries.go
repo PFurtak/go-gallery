@@ -51,7 +51,7 @@ func (g *Galleries) Index(rw http.ResponseWriter, r *http.Request) {
 	}
 	var vd views.Data
 	vd.Yield = galleries
-	g.IndexView.Render(rw, vd)
+	g.IndexView.Render(rw, r, vd)
 }
 
 // GET /galleries/:id
@@ -62,7 +62,7 @@ func (g *Galleries) Show(rw http.ResponseWriter, r *http.Request) {
 	}
 	var vd views.Data
 	vd.Yield = gallery
-	g.ShowView.Render(rw, vd)
+	g.ShowView.Render(rw, r, vd)
 }
 
 // GET /galleries/:id/edit
@@ -78,7 +78,8 @@ func (g *Galleries) Edit(rw http.ResponseWriter, r *http.Request) {
 	}
 	var vd views.Data
 	vd.Yield = gallery
-	g.EditView.Render(rw, vd)
+	vd.User = user
+	g.EditView.Render(rw, r, vd)
 }
 
 // POST /galleries/:id/update
@@ -98,14 +99,14 @@ func (g *Galleries) Update(rw http.ResponseWriter, r *http.Request) {
 	if err := parseForm(r, &form); err != nil {
 		log.Println(err)
 		vd.SetAlert(err)
-		g.EditView.Render(rw, vd)
+		g.EditView.Render(rw, r, vd)
 		return
 	}
 	gallery.Title = form.Title
 	err = g.gs.Update(gallery)
 	if err != nil {
 		vd.SetAlert(err)
-		g.EditView.Render(rw, vd)
+		g.EditView.Render(rw, r, vd)
 		return
 	}
 	vd.Alert = &views.Alert{
@@ -113,7 +114,7 @@ func (g *Galleries) Update(rw http.ResponseWriter, r *http.Request) {
 		AlertType: views.AlertTypeSuccess,
 		Message:   "Gallery successfully updated!",
 	}
-	g.EditView.Render(rw, vd)
+	g.EditView.Render(rw, r, vd)
 }
 
 // Create POSTS /galleries
@@ -123,7 +124,7 @@ func (g *Galleries) Create(rw http.ResponseWriter, r *http.Request) {
 	if err := parseForm(r, &form); err != nil {
 		log.Println(err)
 		vd.SetAlert(err)
-		g.New.Render(rw, vd)
+		g.New.Render(rw, r, vd)
 		return
 	}
 	user := context.User(r.Context())
@@ -138,7 +139,7 @@ func (g *Galleries) Create(rw http.ResponseWriter, r *http.Request) {
 
 	if err := g.gs.Create(&gallery); err != nil {
 		vd.SetAlert(err)
-		g.New.Render(rw, vd)
+		g.New.Render(rw, r, vd)
 		return
 	}
 	url, err := g.router.Get(EditGallery).URL("id", fmt.Sprintf("%v", gallery.ID))
@@ -187,7 +188,7 @@ func (g *Galleries) Delete(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		vd.SetAlert(err)
 		vd.Yield = gallery
-		g.EditView.Render(rw, vd)
+		g.EditView.Render(rw, r, vd)
 		return
 	}
 	http.Redirect(rw, r, "/galleries", http.StatusFound)

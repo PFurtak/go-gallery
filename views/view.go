@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+
+	"github.com/Users/patrickfurtak/desktop/go-gallery/context"
 )
 
 // Variables for ease of updating layout template paths
@@ -41,22 +43,24 @@ type View struct {
 }
 
 func (v *View) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	v.Render(rw, nil)
+	v.Render(rw, r, nil)
 }
 
 // Render is used to render view with predefined layout
-func (v *View) Render(rw http.ResponseWriter, data interface{}) error {
+func (v *View) Render(rw http.ResponseWriter, r *http.Request, data interface{}) error {
 	rw.Header().Set("Content-Type", "text/html")
-	switch data.(type) {
+	var vd Data
+	switch d := data.(type) {
 	case Data:
-		// do nothing
+		vd = d
 	default:
-		data = Data{
+		vd = Data{
 			Yield: data,
 		}
 	}
+	vd.User = context.User(r.Context())
 	var buf bytes.Buffer
-	if err := v.Template.ExecuteTemplate(&buf, v.Layout, data); err != nil {
+	if err := v.Template.ExecuteTemplate(&buf, v.Layout, vd); err != nil {
 		http.Error(rw, "Something went wrong", http.StatusInternalServerError)
 		return (err)
 	}

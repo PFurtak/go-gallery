@@ -42,7 +42,10 @@ func main() {
 	usersController := controllers.NewUsers(services.User)
 	galleriesController := controllers.NewGalleries(services.Gallery, router)
 
-	requireUserMw := middleware.RequireUser{UserService: services.User}
+	userMw := middleware.User{
+		UserService: services.User,
+	}
+	requireUserMw := middleware.RequireUser{User: userMw}
 
 	router.NotFoundHandler = http.HandlerFunc(notFound)
 	router.Handle("/", staticController.Home).Methods("GET")
@@ -51,7 +54,6 @@ func main() {
 	router.HandleFunc("/signup", usersController.Create).Methods("POST")
 	router.Handle("/login", usersController.LoginView).Methods("GET")
 	router.HandleFunc("/login", usersController.Login).Methods("POST")
-	router.HandleFunc("/cookietest", usersController.CookieTest).Methods("GET")
 	router.HandleFunc("/faq", faqHandler)
 
 	//Gallery routes
@@ -64,7 +66,7 @@ func main() {
 	router.HandleFunc("/galleries/{id:[0-9]+}/update", requireUserMw.Applyfn(galleriesController.Update)).Methods("POST")
 	router.HandleFunc("/galleries/{id:[0-9]+}/delete", requireUserMw.Applyfn(galleriesController.Delete)).Methods("POST")
 
-	http.ListenAndServe(":5000", router)
+	http.ListenAndServe(":5000", userMw.Apply(router))
 }
 
 func must(err error) {
