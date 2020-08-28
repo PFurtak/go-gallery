@@ -14,28 +14,44 @@ import (
 
 const (
 	ShowGallery = "show_gallery"
+	EditGallery = "edit_gallery"
 )
 
 func NewGalleries(gs models.GalleryService, router *mux.Router) *Galleries {
 	return &Galleries{
-		New:      views.NewView("bootstrap", "galleries/new"),
-		ShowView: views.NewView("bootstrap", "galleries/show"),
-		EditView: views.NewView("bootstrap", "galleries/edit"),
-		gs:       gs,
-		router:   router,
+		New:       views.NewView("bootstrap", "galleries/new"),
+		ShowView:  views.NewView("bootstrap", "galleries/show"),
+		EditView:  views.NewView("bootstrap", "galleries/edit"),
+		IndexView: views.NewView("bootstrap", "galleries/index"),
+		gs:        gs,
+		router:    router,
 	}
 }
 
 type Galleries struct {
-	New      *views.View
-	ShowView *views.View
-	EditView *views.View
-	gs       models.GalleryService
-	router   *mux.Router
+	New       *views.View
+	ShowView  *views.View
+	EditView  *views.View
+	IndexView *views.View
+	gs        models.GalleryService
+	router    *mux.Router
 }
 
 type GalleryForm struct {
 	Title string `schema:"title"`
+}
+
+// GET /galleries/
+func (g *Galleries) Index(rw http.ResponseWriter, r *http.Request) {
+	user := context.User(r.Context())
+	galleries, err := g.gs.ByUserID(user.ID)
+	if err != nil {
+		http.Error(rw, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+	var vd views.Data
+	vd.Yield = galleries
+	g.IndexView.Render(rw, vd)
 }
 
 // GET /galleries/:id
@@ -125,7 +141,7 @@ func (g *Galleries) Create(rw http.ResponseWriter, r *http.Request) {
 		g.New.Render(rw, vd)
 		return
 	}
-	url, err := g.router.Get(ShowGallery).URL("id", fmt.Sprintf("%v", gallery.ID))
+	url, err := g.router.Get(EditGallery).URL("id", fmt.Sprintf("%v", gallery.ID))
 	if err != nil {
 		// TODO make this go to index
 		http.Redirect(rw, r, "/", http.StatusFound)
@@ -153,4 +169,26 @@ func (g *Galleries) galleryByID(rw http.ResponseWriter, r *http.Request) (*model
 		return nil, err
 	}
 	return gallery, nil
+}
+
+// POST /galleries/:id/delete
+func (g *Galleries) Delete(rw http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryByID(rw, r)
+	if err != nil {
+		return
+	}
+	user := context.User(r.Context())
+	if gallery.UserID != user.ID {
+		http.Error(rw, "Gallery not found", http.StatusNotFound)
+		return
+	}
+	var vd views.Data
+	err = g.gs.Delete(gallery.ID)
+	if err != nil {
+		vd.SetAlert(err)
+		vd.Yield = gallery
+		g.EditView.Render(rw, vd)
+		return
+	}
+	http.Redirect(rw, r, "/galleries", http.StatusFound)
 }

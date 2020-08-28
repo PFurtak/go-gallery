@@ -56,11 +56,13 @@ func main() {
 
 	//Gallery routes
 
+	router.Handle("/galleries", requireUserMw.Applyfn(galleriesController.Index)).Methods("GET")
 	router.Handle("/galleries/new", requireUserMw.Apply(galleriesController.New)).Methods("GET")
 	router.HandleFunc("/galleries", requireUserMw.Applyfn(galleriesController.Create)).Methods("POST")
 	router.HandleFunc("/galleries/{id:[0-9]+}", galleriesController.Show).Methods("GET").Name(controllers.ShowGallery)
-	router.HandleFunc("/galleries/{id:[0-9]+}/edit", requireUserMw.Applyfn(galleriesController.Edit)).Methods("GET")
+	router.HandleFunc("/galleries/{id:[0-9]+}/edit", requireUserMw.Applyfn(galleriesController.Edit)).Methods("GET").Name(controllers.EditGallery)
 	router.HandleFunc("/galleries/{id:[0-9]+}/update", requireUserMw.Applyfn(galleriesController.Update)).Methods("POST")
+	router.HandleFunc("/galleries/{id:[0-9]+}/delete", requireUserMw.Applyfn(galleriesController.Delete)).Methods("POST")
 
 	http.ListenAndServe(":5000", router)
 }
