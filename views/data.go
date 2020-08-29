@@ -1,5 +1,7 @@
 package views
 
+import "github.com/Users/patrickfurtak/desktop/go-gallery/models"
+
 const (
 	// AlerLvls change the displayed alert's color
 	AlertLvlError   = "danger"
@@ -27,6 +29,7 @@ type Alert struct {
 // Data is the top level structure that views expects data to come in as
 type Data struct {
 	Alert *Alert
+	User  *models.User
 	Yield interface{}
 }
 

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -27,7 +26,7 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 	if err := parseForm(r, &form); err != nil {
 		log.Println(err)
 		vd.SetAlert(err)
-		u.NewView.Render(rw, vd)
+		u.NewView.Render(rw, r, vd)
 		return
 	}
 
@@ -39,7 +38,7 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 
 	if err := u.us.Create(&user); err != nil {
 		vd.SetAlert(err)
-		u.NewView.Render(rw, vd)
+		u.NewView.Render(rw, r, vd)
 		return
 	}
 	err := u.signIn(rw, &user)
@@ -47,13 +46,13 @@ func (u *Users) Create(rw http.ResponseWriter, r *http.Request) {
 		http.Redirect(rw, r, "/login", http.StatusFound)
 		return
 	}
-	http.Redirect(rw, r, "/cookietest", http.StatusFound)
+	http.Redirect(rw, r, "/galleries", http.StatusFound)
 }
 
 // New is used to render the signup form for users to create an account.
 // GET /signup
 func (u *Users) New(rw http.ResponseWriter, r *http.Request) {
-	u.NewView.Render(rw, nil)
+	u.NewView.Render(rw, r, nil)
 }
 
 // Login is used to parse login form on submit
@@ -64,7 +63,7 @@ func (u *Users) Login(rw http.ResponseWriter, r *http.Request) {
 	if err := parseForm(r, &form); err != nil {
 		log.Println(err)
 		vd.SetAlert(err)
-		u.LoginView.Render(rw, vd)
+		u.LoginView.Render(rw, r, vd)
 		return
 	}
 
@@ -80,16 +79,16 @@ func (u *Users) Login(rw http.ResponseWriter, r *http.Request) {
 		default:
 			vd.SetAlert(err)
 		}
-		u.LoginView.Render(rw, vd)
+		u.LoginView.Render(rw, r, vd)
 		return
 	}
 	err = u.signIn(rw, user)
 	if err != nil {
 		vd.SetAlert(err)
-		u.LoginView.Render(rw, vd)
+		u.LoginView.Render(rw, r, vd)
 		return
 	}
-	http.Redirect(rw, r, "/cookietest", http.StatusFound)
+	http.Redirect(rw, r, "/galleries", http.StatusFound)
 }
 
 func (u *Users) signIn(rw http.ResponseWriter, user *models.User) error {
@@ -112,21 +111,6 @@ func (u *Users) signIn(rw http.ResponseWriter, user *models.User) error {
 	}
 	http.SetCookie(rw, &cookie)
 	return nil
-}
-
-// CookieTest is used to display current cookie
-func (u *Users) CookieTest(rw http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("remember_token")
-	if err != nil {
-		http.Redirect(rw, r, "/login", http.StatusFound)
-		return
-	}
-	user, err := u.us.ByRemember(cookie.Value)
-	if err != nil {
-		http.Redirect(rw, r, "/login", http.StatusFound)
-		return
-	}
-	fmt.Fprintln(rw, user)
 }
 
 type Users struct {
