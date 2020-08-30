@@ -40,7 +40,7 @@ func main() {
 	router := mux.NewRouter()
 	staticController := controllers.NewStatic()
 	usersController := controllers.NewUsers(services.User)
-	galleriesController := controllers.NewGalleries(services.Gallery, router)
+	galleriesController := controllers.NewGalleries(services.Gallery, services.Image, router)
 
 	userMw := middleware.User{
 		UserService: services.User,
@@ -65,6 +65,8 @@ func main() {
 	router.HandleFunc("/galleries/{id:[0-9]+}/edit", requireUserMw.Applyfn(galleriesController.Edit)).Methods("GET").Name(controllers.EditGallery)
 	router.HandleFunc("/galleries/{id:[0-9]+}/update", requireUserMw.Applyfn(galleriesController.Update)).Methods("POST")
 	router.HandleFunc("/galleries/{id:[0-9]+}/delete", requireUserMw.Applyfn(galleriesController.Delete)).Methods("POST")
+
+	router.HandleFunc("/galleries/{id:[0-9]+}/images", requireUserMw.Applyfn(galleriesController.ImageUpload)).Methods("POST")
 
 	http.ListenAndServe(":5000", userMw.Apply(router))
 }
