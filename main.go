@@ -40,7 +40,7 @@ func main() {
 	router := mux.NewRouter()
 	staticController := controllers.NewStatic()
 	usersController := controllers.NewUsers(services.User)
-	galleriesController := controllers.NewGalleries(services.Gallery, router)
+	galleriesController := controllers.NewGalleries(services.Gallery, services.Image, router)
 
 	userMw := middleware.User{
 		UserService: services.User,
