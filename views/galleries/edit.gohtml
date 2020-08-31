@@ -11,6 +11,11 @@
 </div>
 </div>
 </div>
+<a href="/galleries/{{.ID}}">View Gallery</a>
+<div class ="row">
+{{template "galleryImages" .}}
+</div>
+<hr>
 {{template "deleteActionForm"}}
 {{end}}
 
@@ -39,6 +44,34 @@
 
 {{define "deleteActionForm"}}
 <form action="/galleries/{{.ID}}/delete" method="POST">
-  <button type="submit" class="btn btn-danger">Delete</button>
+  <button type="submit" class="btn btn-danger">Delete Gallery</button>
 </form>
 {{end}}
+
+{{define "galleryImages"}}
+{{range .ImagesSplitN 6}}
+<div class="col-md-2">
+{{range .}}
+<a href="{{.Path}}">
+<img src="{{.Path}}" class ="thumbnail"/>
+</a>
+{{template "deleteImageForm" .}}
+{{end}}
+</div>
+{{end}}
+<style>
+.thumbnail {
+    width: 100%;
+    margin-bottom: 0.7rem;
+}
+</style>
+{{end}}
+
+{{define "deleteImageForm"}}
+
+<form action="/galleries/{{.GalleryID}}/images/{{.Filename}}/delete" method="POST">
+  <button type="submit" class="btn btn-danger">Remove</button>
+</form>
+
+{{end}}
+
