@@ -11,7 +11,10 @@
 </div>
 </div>
 </div>
+<a href="/galleries/{{.ID}}">View Gallery</a>
+<div class ="row">
 {{template "galleryImages" .}}
+</div>
 <hr>
 {{template "deleteActionForm"}}
 {{end}}
@@ -45,12 +48,20 @@
 </form>
 {{end}}
 
-<div class="col-md-10">
 {{define "galleryImages"}}
-<ul>
-{{range .Images}}
-<li> {{.}} </li>
+{{range .ImagesSplitN 6}}
+<div class="col-md-2">
+{{range .}}
+<a href="{{.}}">
+<img src="{{.}}" class ="thumbnail"/>
+</a>
 {{end}}
-</ul>
 </div>
 {{end}}
+<style>
+.thumbnail {
+    width: 100%
+}
+</style>
+{{end}}
+

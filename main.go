@@ -56,6 +56,10 @@ func main() {
 	router.HandleFunc("/login", usersController.Login).Methods("POST")
 	router.HandleFunc("/faq", faqHandler)
 
+	//Images routes
+	imageHandler := http.FileServer(http.Dir("./images/"))
+	router.PathPrefix("/images/").Handler(http.StripPrefix("/images", imageHandler))
+
 	//Gallery routes
 
 	router.Handle("/galleries", requireUserMw.Applyfn(galleriesController.Index)).Methods("GET")
