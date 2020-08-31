@@ -241,3 +241,35 @@ func (g *Galleries) ImageUpload(rw http.ResponseWriter, r *http.Request) {
 	}
 	http.Redirect(rw, r, url.Path, http.StatusFound)
 }
+
+// POST /galleries/:id/images/:filename/delete
+func (g *Galleries) ImageDelete(rw http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryByID(rw, r)
+	if err != nil {
+		return
+	}
+	user := context.User(r.Context())
+	if gallery.UserID != user.ID {
+		http.Error(rw, "Gallery not found", http.StatusNotFound)
+		return
+	}
+	filename := mux.Vars(r)["filename"]
+	i := models.Image{
+		Filename:  filename,
+		GalleryID: gallery.ID,
+	}
+	err = g.is.Delete(&i)
+	if err != nil {
+		var vd views.Data
+		vd.Yield = gallery
+		vd.SetAlert(err)
+		g.EditView.Render(rw, r, vd)
+		return
+	}
+	url, err := g.router.Get(EditGallery).URL("id", fmt.Sprintf("%v", gallery.ID))
+	if err != nil {
+		http.Redirect(rw, r, "/galleries", http.StatusFound)
+		return
+	}
+	http.Redirect(rw, r, url.Path, http.StatusFound)
+}
