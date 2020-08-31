@@ -172,6 +172,8 @@ func (g *Galleries) galleryByID(rw http.ResponseWriter, r *http.Request) (*model
 		}
 		return nil, err
 	}
+	images, _ := g.is.ByGalleryID(gallery.ID)
+	gallery.Images = images
 	return gallery, nil
 }
 
@@ -233,5 +235,9 @@ func (g *Galleries) ImageUpload(rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	fmt.Fprintln(rw, "Files successfully uploaded!")
+	url, err := g.router.Get(EditGallery).URL("id", fmt.Sprintf("%v", gallery.ID))
+	if err != nil {
+		http.Redirect(rw, r, "/galleries", http.StatusFound)
+	}
+	http.Redirect(rw, r, url.Path, http.StatusFound)
 }
