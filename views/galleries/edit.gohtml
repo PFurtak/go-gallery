@@ -16,7 +16,7 @@
 {{template "galleryImages" .}}
 </div>
 <hr>
-{{template "deleteActionForm"}}
+{{template "deleteActionForm" .}}
 {{end}}
 
 {{define "editGalleryForm"}}
@@ -59,12 +59,7 @@
 {{end}}
 </div>
 {{end}}
-<style>
-.thumbnail {
-    width: 100%;
-    margin-bottom: 0.7rem;
-}
-</style>
+
 {{end}}
 
 {{define "deleteImageForm"}}
