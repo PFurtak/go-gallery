@@ -49,6 +49,7 @@ func (g *Galleries) Index(rw http.ResponseWriter, r *http.Request) {
 	user := context.User(r.Context())
 	galleries, err := g.gs.ByUserID(user.ID)
 	if err != nil {
+		log.Println(err)
 		http.Error(rw, "Something went wrong", http.StatusInternalServerError)
 		return
 	}
@@ -147,8 +148,8 @@ func (g *Galleries) Create(rw http.ResponseWriter, r *http.Request) {
 	}
 	url, err := g.router.Get(EditGallery).URL("id", fmt.Sprintf("%v", gallery.ID))
 	if err != nil {
-		// TODO make this go to index
-		http.Redirect(rw, r, "/", http.StatusFound)
+		log.Println(err)
+		http.Redirect(rw, r, "/galleries", http.StatusFound)
 		return
 	}
 	http.Redirect(rw, r, url.Path, http.StatusFound)
@@ -159,6 +160,7 @@ func (g *Galleries) galleryByID(rw http.ResponseWriter, r *http.Request) (*model
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		log.Println(err)
 		http.Error(rw, "Invalid gallery ID", http.StatusNotFound)
 		return nil, err
 	}
@@ -168,6 +170,7 @@ func (g *Galleries) galleryByID(rw http.ResponseWriter, r *http.Request) (*model
 		case models.ErrNotFound:
 			http.Error(rw, "Gallery not found", http.StatusNotFound)
 		default:
+			log.Println(err)
 			http.Error(rw, "Something went wrong ;[", http.StatusInternalServerError)
 		}
 		return nil, err
@@ -237,6 +240,7 @@ func (g *Galleries) ImageUpload(rw http.ResponseWriter, r *http.Request) {
 	}
 	url, err := g.router.Get(EditGallery).URL("id", fmt.Sprintf("%v", gallery.ID))
 	if err != nil {
+		log.Println(err)
 		http.Redirect(rw, r, "/galleries", http.StatusFound)
 	}
 	http.Redirect(rw, r, url.Path, http.StatusFound)
@@ -268,6 +272,7 @@ func (g *Galleries) ImageDelete(rw http.ResponseWriter, r *http.Request) {
 	}
 	url, err := g.router.Get(EditGallery).URL("id", fmt.Sprintf("%v", gallery.ID))
 	if err != nil {
+		log.Println(err)
 		http.Redirect(rw, r, "/galleries", http.StatusFound)
 		return
 	}
