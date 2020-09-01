@@ -105,11 +105,6 @@ func (gg *galleryGorm) Update(gallery *Gallery) error {
 	return gg.db.Save(gallery).Error
 }
 
-func (gg *galleryGorm) Delete(id uint) error {
-	gallery := Gallery{Model: gorm.Model{ID: id}}
-	return gg.db.Delete(&gallery).Error
-}
-
 func (gg *galleryGorm) ByID(id uint) (*Gallery, error) {
 	var gallery Gallery
 	db := gg.db.Where("id = ?", id)
@@ -132,4 +127,9 @@ func (gv *galleryValidator) Delete(id uint) error {
 		return ErrInvalidID
 	}
 	return gv.GalleryDB.Delete(id)
+}
+
+func (gg *galleryGorm) Delete(id uint) error {
+	gallery := Gallery{Model: gorm.Model{ID: id}}
+	return gg.db.Delete(&gallery).Error
 }
