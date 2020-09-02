@@ -7,6 +7,8 @@ import (
 	"github.com/Users/patrickfurtak/desktop/go-gallery/controllers"
 	"github.com/Users/patrickfurtak/desktop/go-gallery/middleware"
 	"github.com/Users/patrickfurtak/desktop/go-gallery/models"
+	"github.com/Users/patrickfurtak/desktop/go-gallery/rand"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 )
 
@@ -42,6 +44,12 @@ func main() {
 	usersController := controllers.NewUsers(services.User)
 	galleriesController := controllers.NewGalleries(services.Gallery, services.Image, router)
 
+	// Todo make config variable
+	isProd := false
+	b, err := rand.Bytes(32)
+	must(err)
+	csrfMw := csrf.Protect(b, csrf.Secure(isProd))
+
 	userMw := middleware.User{
 		UserService: services.User,
 	}
@@ -76,7 +84,7 @@ func main() {
 	router.HandleFunc("/galleries/{id:[0-9]+}/delete", requireUserMw.Applyfn(galleriesController.Delete)).Methods("POST")
 	router.HandleFunc("/galleries/{id:[0-9]+}/images", requireUserMw.Applyfn(galleriesController.ImageUpload)).Methods("POST")
 	router.HandleFunc("/galleries/{id:[0-9]+}/images/{filename}/delete", requireUserMw.Applyfn(galleriesController.ImageDelete)).Methods("POST")
-	http.ListenAndServe(":5000", userMw.Apply(router))
+	http.ListenAndServe(":5000", csrfMw(userMw.Apply(router)))
 }
 
 func must(err error) {

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/Users/patrickfurtak/desktop/go-gallery/context"
+	"github.com/gorilla/csrf"
 )
 
 // Variables for ease of updating layout template paths
@@ -26,7 +27,11 @@ func NewView(layout string, files ...string) *View {
 	addTemplatePath(files)
 	addTemplateExtension(files)
 	files = append(files, layoutFiles()...)
-	t, err := template.ParseFiles(files...)
+	t, err := template.New("").Funcs(template.FuncMap{
+		"csrfField": func() template.HTML {
+			return "<h1>CSRF Field</h1>"
+		},
+	}).ParseFiles(files...)
 	if err != nil {
 		panic(err)
 	}
@@ -60,7 +65,13 @@ func (v *View) Render(rw http.ResponseWriter, r *http.Request, data interface{})
 	}
 	vd.User = context.User(r.Context())
 	var buf bytes.Buffer
-	if err := v.Template.ExecuteTemplate(&buf, v.Layout, vd); err != nil {
+	csrfField := csrf.TemplateField(r)
+	tpl := v.Template.Funcs(template.FuncMap{
+		"csrfField": func() template.HTML {
+			return csrfField
+		},
+	})
+	if err := tpl.ExecuteTemplate(&buf, v.Layout, vd); err != nil {
 		http.Error(rw, "Something went wrong", http.StatusInternalServerError)
 		return (err)
 	}
