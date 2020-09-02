@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Users/patrickfurtak/desktop/go-gallery/context"
 	"github.com/Users/patrickfurtak/desktop/go-gallery/models"
@@ -46,6 +47,14 @@ func (mw *RequireUser) Apply(next http.Handler) http.HandlerFunc {
 
 func (mw *RequireUser) Applyfn(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+
+		path := r.URL.Path
+
+		if strings.HasPrefix(path, "/assets/") || strings.HasPrefix(path, "/images/") {
+			next(rw, r)
+			return
+		}
+
 		user := context.User(r.Context())
 		if user == nil {
 			http.Redirect(rw, r, "/login", http.StatusFound)
