@@ -7,11 +7,11 @@ import (
 	"github.com/Users/patrickfurtak/desktop/go-gallery/hash"
 	"github.com/Users/patrickfurtak/desktop/go-gallery/rand"
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
+// TODO: ENV VAR
 const userPwPepper = "sadjfhusdfjhsdfbchfdsssswqdnfgchdnsdfhdskjdbfuv"
 const hmacKey = "notsosecret"
 

@@ -12,13 +12,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const (
-	host   = "localhost"
-	port   = 5432
-	user   = "patrickfurtak"
-	dbname = "gogallery"
-)
-
 func faqHandler(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "text/html")
 	fmt.Fprint(rw, "<h1>FAQ</h1><br><ol><li>Who is this site for? <b>Photographers!</b></li><li>Can I upload my own photos? <b>Yes!</b></li><li>What language is this application written in? <b>Golang</b></li></ol>")
@@ -31,9 +24,9 @@ func notFound(rw http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable", host, port, user, dbname)
-	services, err := models.NewServices(psqlInfo)
+	cfg := DefaultConfig()
+	dbCfg := DefaultPostgresConfig()
+	services, err := models.NewServices(dbCfg.Dialect(), dbCfg.DbConfigInfo())
 	must(err)
 	defer services.Close()
 	services.AutoMigrate()
@@ -44,11 +37,10 @@ func main() {
 	usersController := controllers.NewUsers(services.User)
 	galleriesController := controllers.NewGalleries(services.Gallery, services.Image, router)
 
-	// Todo make config variable
-	isProd := false
 	b, err := rand.Bytes(32)
 	must(err)
-	csrfMw := csrf.Protect(b, csrf.Secure(isProd))
+
+	csrfMw := csrf.Protect(b, csrf.Secure(cfg.IsProd()))
 
 	userMw := middleware.User{
 		UserService: services.User,
@@ -84,7 +76,8 @@ func main() {
 	router.HandleFunc("/galleries/{id:[0-9]+}/delete", requireUserMw.Applyfn(galleriesController.Delete)).Methods("POST")
 	router.HandleFunc("/galleries/{id:[0-9]+}/images", requireUserMw.Applyfn(galleriesController.ImageUpload)).Methods("POST")
 	router.HandleFunc("/galleries/{id:[0-9]+}/images/{filename}/delete", requireUserMw.Applyfn(galleriesController.ImageDelete)).Methods("POST")
-	http.ListenAndServe(":5000", csrfMw(userMw.Apply(router)))
+
+	http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), csrfMw(userMw.Apply(router)))
 }
 
 func must(err error) {
