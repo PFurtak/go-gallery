@@ -67,7 +67,7 @@
 
 {{define "deleteImageForm"}}
 
-<form action="/galleries/{{.GalleryID}}/images/{{.Filename}}/delete" method="POST">
+<form action="/galleries/{{.GalleryID}}/images/{{.Filename | urlquery}}/delete" method="POST">
   <button type="submit" class="btn btn-danger">Remove</button>
   {{csrfField}}
 </form>
